@@ -34,6 +34,22 @@
     <!-- BOTÃO FLUTUANTE ADICIONAR -->
     <a href="cadastro.html" id="fab-add" class="btn-fab hidden" title="Adicionar Produto">+</a>
 
+    <!-- MODAL DE BOAS-VINDAS (Atividade 1) -->
+    <div id="welcome-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="close-welcome-x" class="btn-close-x" title="Fechar">&times;</button>
+            <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Aviso Importante!</h2>
+            <p style="text-align: left; line-height: 1.6;">
+                Colocando a mesnagem da atividade 1 que nao consegui fazer:
+                <br><br>
+                <strong>"Morar no japão é tão bom que você não precisa ir até as praias. Elas que vem até você"</strong>
+            </p>
+            <div class="modal-buttons" style="margin-top: 2rem;">
+                <button id="close-welcome-btn" class="btn-primary">Entendido!</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE CONFIRMAÇÃO -->
     <div id="delete-modal" class="modal-overlay">
         <div class="modal-content">
@@ -180,6 +196,25 @@
             }
             type();
         }
+
+        // Lógica do Modal de Boas-vindas (Primeiro Acesso)
+        const welcomeModal = document.getElementById('welcome-modal');
+        const btnCloseWelcome = document.getElementById('close-welcome-btn');
+        const btnCloseWelcomeX = document.getElementById('close-welcome-x');
+
+        function fecharWelcome() {
+            welcomeModal.classList.remove('active');
+            localStorage.setItem('primeiroAcessoRealizado', 'true');
+        }
+
+        if (!localStorage.getItem('primeiroAcessoRealizado')) {
+            setTimeout(() => {
+                welcomeModal.classList.add('active');
+            }, 1000); // Aparece após 1 segundo
+        }
+
+        btnCloseWelcome.onclick = fecharWelcome;
+        btnCloseWelcomeX.onclick = fecharWelcome;
 
         window.onload = () => {
             carregarProdutos();

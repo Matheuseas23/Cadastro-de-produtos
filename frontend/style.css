@@ -582,3 +582,23 @@ main {
     background: var(--border);
     transform: translateY(-3px);
 }
+
+/* BOTÃO DE FECHAR (X) PARA MODAIS */
+.btn-close-x {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    line-height: 1;
+    padding: 5px;
+}
+
+.btn-close-x:hover {
+    color: var(--primary);
+    transform: scale(1.1);
+}
