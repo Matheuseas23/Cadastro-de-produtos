@@ -1,0 +1,12 @@
+CREATE DATABASE IF NOT EXISTS web_03mc;
+
+USE web_03mc;
+
+CREATE TABLE IF NOT EXISTS produtos_natal (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    categoria VARCHAR(100),
+    preco DECIMAL(10, 2) NOT NULL,
+    descricao TEXT,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

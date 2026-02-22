@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Produto</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="logo">
+        <span class="cti">31CTI</span>
+        <span class="name">Matheus Garcia</span>
+    </div>
+    <div class="theme-container">
+        <button id="theme-toggle" class="theme-toggle" title="Alternar Tema">🌙</button>
+        <span id="theme-text" class="theme-label">Modo Escuro</span>
+    </div>
+    <div class="container">
+        <header>
+            <h1>Cadastrar Produto</h1>
+            <p>Adicione um novo produto, filme ou música ao seu catálogo.</p>
+        </header>
+
+        <a href="index.html" id="btn-back" class="btn-fab-back" title="Voltar para Lista">⬅</a>
+
+        <main>
+            <form id="form-cadastro" class="glass-form">
+                <div class="form-group">
+                    <label for="nome">Nome do Item</label>
+                    <input type="text" id="nome" name="nome" placeholder="Ex: Inception, Pizza, Bohemian Rhapsody"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" name="categoria" required>
+                        <option value="Produto">Produto</option>
+                        <option value="Filme">Filme</option>
+                        <option value="Música">Música</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="preco">Preço (R$)</label>
+                    <input type="number" id="preco" name="preco" step="0.01" placeholder="0.00" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" name="descricao" placeholder="Breve descrição do item..."
+                        rows="4"></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">Registrar</button>
+            </form>
+            <div id="mensagem" class="hidden"></div>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById('form-cadastro');
+        const mensagemDiv = document.getElementById('mensagem');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('http://localhost:3000/produtos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    form.reset();
+                    console.log('Sucesso!');
+                } else {
+                    console.error('Erro ao cadastrar:', result.error);
+                }
+            } catch (error) {
+                console.error('Erro de conexão:', error);
+            }
+        };
+
+        // Lógica de Modo Escuro
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeText = document.getElementById('theme-text');
+        const body = document.body;
+
+        function atualizarLabelTema(isDark) {
+            themeText.textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            atualizarLabelTema(true);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            atualizarLabelTema(isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+    </script>
+</body>
+
+</html>
