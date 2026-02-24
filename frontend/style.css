@@ -39,6 +39,34 @@ body {
     transition: background 0.3s ease;
 }
 
+/* CUSTOM SCROLLBAR - DESIGN PREMIUM */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 99px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-hover);
+    border: 1px solid transparent;
+}
+
+/* Para Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) transparent;
+}
+
 .container {
     max-width: 900px;
     margin: 0 auto;
@@ -54,13 +82,16 @@ header h1 {
     font-weight: 600;
     margin-bottom: 0.5rem;
     color: var(--primary);
-    min-height: 3.5rem;
-    /* Evita pulo de layout */
     display: inline-block;
-    position: relative;
 }
 
-header h1::after {
+#typing-text {
+    position: relative;
+    min-height: 3.5rem;
+    /* Evita pulo de layout apenas onde tem animação */
+}
+
+#typing-text::after {
     content: '|';
     margin-left: 5px;
     animation: blink 0.7s infinite;
@@ -112,10 +143,79 @@ nav a:hover {
     top: 20px;
     right: 20px;
     display: flex;
+    flex-direction: row;
+    /* Foto à esquerda, controles à direita */
+    align-items: flex-start;
+    /* Alinha pelo topo para controle manual */
+    gap: 1.2rem;
+    z-index: 1000;
+}
+
+.user-avatar-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    /* Removida a borda roxa */
+    object-fit: cover;
+    /* Faz a foto preencher o círculo sem distorcer */
+    box-shadow: var(--shadow);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background-color: var(--card-bg);
+    margin-top: -1px;
+    cursor: pointer;
+    display: block;
+}
+
+.user-avatar:hover {
+    transform: scale(1.1);
+}
+
+/* Tooltip Customizada */
+.user-avatar-container::after {
+    content: "Márcio Marçal";
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--card-bg);
+    color: var(--text-main);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    z-index: 1001;
+}
+
+.user-avatar-container:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.theme-controls {
+    display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
-    z-index: 1000;
+    gap: 4px;
+}
+
+.theme-toggle {
+    margin: 0;
+    /* Remove margens extras */
 }
 
 .theme-toggle {
@@ -410,6 +510,8 @@ main {
 }
 
 .btn-add-circle {
+    position: relative;
+    /* Adicionado para a tooltip */
     width: 60px;
     height: 60px;
     background: var(--primary);
@@ -426,16 +528,60 @@ main {
 }
 
 .btn-add-circle:hover {
-    transform: scale(1.15) rotate(90deg);
+    transform: scale(1.15);
     background: var(--primary-hover);
     box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.6);
+}
+
+.btn-add-circle:hover span {
+    transform: rotate(90deg);
+}
+
+.btn-add-circle span {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Tooltip Customizada para o Botão do Estado Vazio */
+.btn-add-circle::after {
+    content: "Adicionar Produto";
+    position: absolute;
+    bottom: -45px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--card-bg);
+    color: var(--text-main);
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    pointer-events: none;
+    z-index: 100;
+}
+
+.btn-add-circle:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* FAB - FLOAT ACTION BUTTON */
 .btn-fab {
     position: fixed;
     bottom: 30px;
-    left: 30px;
+    right: 30px;
     width: 70px;
     height: 70px;
     background: var(--primary);
@@ -454,19 +600,199 @@ main {
 }
 
 .btn-fab:hover {
-    transform: scale(1.1) rotate(90deg);
+    transform: scale(1.1);
     background: var(--primary-hover);
     box-shadow: 0 15px 35px rgba(99, 102, 241, 0.6);
 }
 
-/* BOTÃO VOLTAR FLUTUANTE */
-.btn-fab-back {
+.btn-fab:hover span {
+    transform: rotate(90deg);
+}
+
+.btn-fab span {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Tooltip Customizada para o FAB */
+.btn-fab::after {
+    content: "Adicionar Produto";
+    position: absolute;
+    top: 50%;
+    right: 85px;
+    /* Aparece à esquerda do botão */
+    transform: translateY(-50%) translateX(10px);
+    background: var(--card-bg);
+    color: var(--text-main);
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    pointer-events: none;
+}
+
+/* Setinha da Tooltip */
+.btn-fab::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 77px;
+    transform: translateY(-50%) translateX(10px);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent transparent var(--border);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.btn-fab:hover::after,
+.btn-fab:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* FAB - TRASH (LIXEIRA) */
+.btn-fab-trash {
     position: fixed;
     bottom: 30px;
-    left: 30px;
+    right: 120px;
+    /* Ao lado do botão de adicionar */
+    width: 70px;
+    height: 70px;
+    background: #ef4444;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 2rem;
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1000;
+    cursor: pointer;
+    border: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+}
+
+.btn-fab-trash.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+.btn-fab-trash:hover {
+    transform: scale(1.1);
+    background: #dc2626;
+    box-shadow: 0 15px 35px rgba(239, 68, 68, 0.6);
+}
+
+.btn-fab-trash span {
+    transition: transform 0.4s ease;
+}
+
+.btn-fab-trash:hover span {
+    transform: rotate(15deg);
+}
+
+.btn-fab-trash::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 50%;
+    right: 85px;
+    transform: translateY(-50%) translateX(10px);
+    background: var(--card-bg);
+    color: #ef4444;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+    border: 1px solid #fee2e2;
+    backdrop-filter: blur(10px);
+    pointer-events: none;
+}
+
+.btn-fab-trash:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* MODO DE SELEÇÃO COM CAIXINHA */
+.selection-box {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #ef4444;
+    border-radius: 6px;
+    display: none;
+    /* Escondido por padrão */
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    background: var(--card-bg);
+    z-index: 20;
+    color: transparent;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.selection-mode .selection-box {
+    display: flex;
+    /* Mostra apenas no modo de seleção */
+}
+
+.card.selected .selection-box {
+    background: #ef4444;
+    color: white;
+}
+
+.card.selected .selection-box::after {
+    content: "✓";
+}
+
+.card:hover .selection-box {
+    transform: scale(1.1);
+}
+
+/* Esconder o botão de deletar individual se estiver no novo sistema */
+.btn-delete {
+    display: none !important;
+}
+
+/* BOTÃO VOLTAR (POSICIONADO FIXO PARA NÃO CONFLITAR COM O CONTEÚDO) */
+.btn-fab-back {
+    position: fixed;
+    top: 150px;
+    /* Posicionado mais abaixo, conforme pedido */
+    left: 40px;
     width: 60px;
     height: 60px;
-    background: var(--input-bg);
+    background: var(--card-bg);
     color: var(--text-main);
     display: flex;
     align-items: center;
@@ -474,10 +800,20 @@ main {
     border-radius: 50%;
     text-decoration: none;
     font-size: 1.5rem;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow);
     border: 1px solid var(--border);
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 1000;
+}
+
+/* Em telas menores, move para cima do título */
+@media (max-width: 1100px) {
+    .btn-fab-back {
+        position: relative;
+        left: 0;
+        margin-bottom: 2rem;
+        top: auto;
+    }
 }
 
 .btn-fab-back:hover {
@@ -499,12 +835,13 @@ main {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7) !important;
-    backdrop-filter: blur(8px) !important;
+    background: var(--glass) !important;
+    backdrop-filter: blur(15px) saturate(180%) !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 99999;
+    z-index: 150000;
+    /* Aumentado para aparecer sobre tudo */
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -601,4 +938,199 @@ main {
 .btn-close-x:hover {
     color: var(--primary);
     transform: scale(1.1);
+}
+
+/* MODAL DE IMAGEM (VIEWER) */
+.image-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    /* Quase transparente */
+    backdrop-filter: blur(25px) saturate(180%);
+    /* Desfoque intenso e cores vivas */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 110000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.image-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.image-modal-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    transform: scale(0.8);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.image-modal-overlay.active .image-modal-content {
+    transform: scale(1);
+}
+
+.image-modal-content img {
+    width: 350px;
+    /* Tamanho fixo para garantir o círculo perfeito */
+    height: 350px;
+    object-fit: cover;
+    /* Preenche o círculo e remove as bordas pretas */
+    border-radius: 50%;
+    /* Foto em círculo */
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+    display: block;
+    border: none;
+    /* Garante que não tenha bordas */
+}
+
+.btn-close-image {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.btn-close-image:hover {
+    transform: scale(1.1) rotate(90deg);
+    background: #ef4444;
+}
+
+/* CARINHA FELIZ FIXA NO CANTO */
+.happy-follower {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 60px;
+    height: 60px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 120000;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    transition: bottom 0.5s ease;
+}
+
+.face {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+}
+
+.eyes {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.eye-socket {
+    width: 10px;
+    height: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eye {
+    width: 6px;
+    height: 6px;
+    background: #0f172a;
+    border-radius: 50%;
+    transition: transform 0.05s linear;
+}
+
+.mouth {
+    width: 20px;
+    height: 10px;
+    border-bottom: 3px solid #0f172a;
+    border-radius: 0 0 15px 15px;
+    margin-top: 2px;
+}
+
+/* Ajuste dinâmico de cor baseado no tema */
+body:not(.dark-mode) .eye {
+    background: #f8fafc;
+}
+
+body:not(.dark-mode) .mouth {
+    border-bottom-color: #f8fafc;
+}
+
+body.dark-mode .eye {
+    background: #0f172a;
+}
+
+body.dark-mode .mouth {
+    border-bottom-color: #0f172a;
+}
+
+/* NOTIFICAÇÃO TOAST */
+.toast-container {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(15px);
+    color: white;
+    padding: 1.2rem 2.5rem;
+    border-radius: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    z-index: 200000;
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.toast-container.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast-icon {
+    background: #ef4444;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.2rem;
+}
+
+.toast-message {
+    font-weight: 600;
+    font-size: 1rem;
 }

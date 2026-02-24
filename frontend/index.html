@@ -17,8 +17,14 @@
         <span class="name">Matheus Garcia</span>
     </div>
     <div class="theme-container">
-        <button id="theme-toggle" class="theme-toggle" title="Alternar Tema">🌙</button>
-        <span id="theme-text" class="theme-label">Modo Escuro</span>
+        <div class="theme-controls">
+            <button id="theme-toggle" class="theme-toggle" title="Alternar Tema">🌙</button>
+            <span id="theme-text" class="theme-label">Modo Escuro</span>
+        </div>
+        <div class="user-avatar-container">
+            <img src="assets/user.png" alt="Márcio Marçal" class="user-avatar"
+                onerror="this.src='https://ui-avatars.com/api/?name=Marcio+Marcal&background=6366f1&color=fff'">
+        </div>
     </div>
     <div class="container">
         <header>
@@ -31,8 +37,9 @@
         </main>
     </div>
 
-    <!-- BOTÃO FLUTUANTE ADICIONAR -->
-    <a href="cadastro.html" id="fab-add" class="btn-fab hidden" title="Adicionar Produto">+</a>
+    <!-- BOTÕES FLUTUANTES -->
+    <a href="cadastro.html" id="fab-add" class="btn-fab hidden"><span>+</span></a>
+    <button id="fab-delete" class="btn-fab-trash hidden" data-tooltip="Remover Itens"><span>🗑️</span></button>
 
     <!-- MODAL DE BOAS-VINDAS (Atividade 1) -->
     <div id="welcome-modal" class="modal-overlay">
@@ -40,9 +47,9 @@
             <button id="close-welcome-x" class="btn-close-x" title="Fechar">&times;</button>
             <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Aviso Importante!</h2>
             <p style="text-align: left; line-height: 1.6;">
-                Colocando a mesnagem da atividade 1 que nao consegui fazer:
+                Colocando a mensagem da atividade 1 que não consegui fazer:
                 <br><br>
-                <strong>"Morar no japão é tão bom que você não precisa ir até as praias. Elas que vem até você"</strong>
+                <strong>"Morar no Japão é tão bom que você não precisa ir até as praias. Elas que vêm até você"</strong>
             </p>
             <div class="modal-buttons" style="margin-top: 2rem;">
                 <button id="close-welcome-btn" class="btn-primary">Entendido!</button>
@@ -62,6 +69,35 @@
         </div>
     </div>
 
+    <!-- MODAL DE VISUALIZAÇÃO DE IMAGEM -->
+    <div id="image-modal" class="image-modal-overlay">
+        <div class="image-modal-content">
+            <button id="close-image-btn" class="btn-close-image" title="Fechar">&times;</button>
+            <img src="assets/user.png" alt="Márcio Marçal Grande" id="expanded-image">
+        </div>
+    </div>
+
+    <!-- CARINHA FELIZ FIXA QUE SEGUE COM OS OLHOS -->
+    <div id="happy-follower" class="happy-follower">
+        <div class="face">
+            <div class="eyes">
+                <div class="eye-socket">
+                    <div class="eye"></div>
+                </div>
+                <div class="eye-socket">
+                    <div class="eye"></div>
+                </div>
+            </div>
+            <div class="mouth"></div>
+        </div>
+    </div>
+
+    <!-- NOTIFICAÇÃO TOAST -->
+    <div id="toast" class="toast-container">
+        <div class="toast-icon">🗑️</div>
+        <div class="toast-message" id="toast-text">Produto Excluído!</div>
+    </div>
+
     <script>
         let idParaDeletar = null;
         const modal = document.getElementById('delete-modal');
@@ -71,6 +107,7 @@
         async function carregarProdutos() {
             const container = document.getElementById('lista-produtos');
             const fab = document.getElementById('fab-add');
+            const fabDelete = document.getElementById('fab-delete');
 
             function mostrarEstadoVazio() {
                 fab.classList.add('hidden');
@@ -85,51 +122,103 @@
                             </svg>
                         </div>
                         <p class="empty-message">Nenhum item cadastrado ainda.</p>
-                        <a href="cadastro.html" class="btn-add-circle" title="Adicionar Produto">+</a>
+                        <a href="cadastro.html" class="btn-add-circle"><span>+</span></a>
                     </div>
                 `;
             }
 
             try {
-                const response = await fetch('http://localhost:3000/produtos');
+                // Adicionado cache busting para garantir que os novos produtos apareçam
+                const response = await fetch(`http://localhost:3000/produtos?t=${Date.now()}`);
                 if (!response.ok) throw new Error('Servidor retornou erro');
 
                 const produtos = await response.json();
-                container.innerHTML = '';
 
                 if (!Array.isArray(produtos) || produtos.length === 0) {
                     mostrarEstadoVazio();
+                    fab.classList.add('hidden');
+                    fabDelete.classList.add('hidden');
+                    fabDelete.classList.remove('visible');
                     return;
                 }
 
-                fab.classList.remove('hidden');
-
+                // Construindo a lista completa como string para injeção atômica (Zero Piscar!)
+                let fullHTML = '';
                 produtos.forEach(produto => {
-                    const card = document.createElement('div');
-                    card.className = 'card';
                     const produtoId = (produto.id || Date.now()).toString();
-                    card.innerHTML = `
-                        <button class="btn-delete" title="Excluir Produto" onclick="abrirModal('${produtoId}')">🗑️</button>
-                        <div class="card-header">
-                            <span class="badge">${produto.categoria || 'Geral'}</span>
-                            <h3>${produto.nome || 'Sem nome'}</h3>
-                        </div>
-                        <div class="card-body">
-                            <p>${produto.descricao || 'Sem descrição.'}</p>
-                            <span class="price">R$ ${parseFloat(produto.preco || 0).toFixed(2)}</span>
+                    fullHTML += `
+                        <div class="card" data-id="${produtoId}" onclick="handleCardClick(this)">
+                            <div class="selection-box"></div>
+                            <div class="card-header">
+                                <span class="badge">${produto.categoria || 'Geral'}</span>
+                                <h3>${produto.nome || 'Sem nome'}</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>${produto.descricao || 'Sem descrição.'}</p>
+                                <span class="price">R$ ${parseFloat(produto.preco || 0).toFixed(2)}</span>
+                            </div>
                         </div>
                     `;
-                    container.appendChild(card);
                 });
+
+                container.innerHTML = fullHTML;
+
+                fab.classList.remove('hidden');
+                fabDelete.classList.remove('hidden');
+                fabDelete.classList.add('visible');
+                atualizarIconeLixeira();
+
+                fabDelete.onclick = () => {
+                    const isInSelectionMode = container.classList.contains('selection-mode');
+
+                    if (!isInSelectionMode) {
+                        container.classList.add('selection-mode');
+                        atualizarIconeLixeira();
+                    } else {
+                        const selectedCards = document.querySelectorAll('.card.selected');
+                        const ids = Array.from(selectedCards).map(c => c.dataset.id);
+
+                        if (ids.length > 0) {
+                            abrirModal(ids);
+                        } else {
+                            container.classList.remove('selection-mode');
+                            atualizarIconeLixeira();
+                        }
+                    }
+                };
+
             } catch (error) {
                 console.error('Erro de conexão:', error);
                 mostrarEstadoVazio();
             }
         }
 
-        function abrirModal(id) {
-            idParaDeletar = id;
-            modal.classList.add('active');
+        function atualizarIconeLixeira() {
+            const container = document.getElementById('lista-produtos');
+            const fabDelete = document.getElementById('fab-delete');
+            const selectedCount = document.querySelectorAll('.card.selected').length;
+            const span = fabDelete.querySelector('span');
+
+            if (container.classList.contains('selection-mode')) {
+                if (selectedCount > 0) {
+                    span.textContent = '🗑️';
+                    fabDelete.setAttribute('data-tooltip', `Excluir ${selectedCount} item(s)`);
+                } else {
+                    span.textContent = '✕';
+                    fabDelete.setAttribute('data-tooltip', 'Cancelar Seleção');
+                }
+            } else {
+                span.textContent = '🗑️';
+                fabDelete.setAttribute('data-tooltip', 'Remover Itens');
+            }
+        }
+
+        function handleCardClick(card) {
+            const container = document.getElementById('lista-produtos');
+            if (container.classList.contains('selection-mode')) {
+                card.classList.toggle('selected');
+                atualizarIconeLixeira();
+            }
         }
 
         function fecharModal() {
@@ -139,28 +228,69 @@
 
         btnCancel.onclick = fecharModal;
 
-        btnConfirm.onclick = async () => {
+        function abrirModal(ids) {
+            idParaDeletar = ids;
+            const modalElem = document.getElementById('delete-modal');
+            const h2 = modalElem.querySelector('h2');
+            const p = modalElem.querySelector('p');
+            const btnConfirm = document.getElementById('confirm-delete'); // Corrected ID
+
+            h2.textContent = "Excluir produto?";
+            p.textContent = Array.isArray(ids) && ids.length > 1
+                ? `Tem certeza que deseja excluir os ${ids.length} itens selecionados?`
+                : 'Tem certeza que deseja excluir este item?';
+
+            btnConfirm.textContent = "Excluir";
+            modalElem.classList.add('active');
+        }
+
+        async function confirmarExclusao() {
             if (!idParaDeletar) return;
-            console.log('Enviando requisição para excluir ID:', idParaDeletar);
 
-            try {
-                const response = await fetch(`http://localhost:3000/produtos/${idParaDeletar}`, {
-                    method: 'DELETE'
-                });
+            const ids = Array.isArray(idParaDeletar) ? idParaDeletar : [idParaDeletar];
 
-                if (response.ok) {
-                    console.log('Exclusão confirmada pelo servidor!');
-                    fecharModal();
-                    carregarProdutos();
-                } else {
-                    console.error('Falha na resposta do servidor:', response.status);
-                    fecharModal();
+            for (const id of ids) {
+                try {
+                    await fetch(`http://localhost:3000/produtos/${id}`, {
+                        method: 'DELETE'
+                    });
+                } catch (error) {
+                    console.error('Erro ao deletar:', id, error);
                 }
-            } catch (error) {
-                console.error('Erro ao deletar:', error);
-                fecharModal();
             }
-        };
+
+            modal.classList.remove('active');
+            document.getElementById('lista-produtos').classList.remove('selection-mode');
+
+            // Mostrar notificação de exclusão
+            mostrarToast(ids.length > 1 ? `${ids.length} itens excluídos!` : "Produto Excluído!");
+            carregarProdutos();
+            idParaDeletar = null;
+        }
+
+        let toastTimeout;
+        function mostrarToast(mensagem) {
+            const toast = document.getElementById('toast');
+            const text = document.getElementById('toast-text');
+
+            // Limpa o tempo anterior se o usuário excluir vários seguidos
+            clearTimeout(toastTimeout);
+            toast.classList.remove('show');
+
+            text.textContent = mensagem;
+
+            // Pequeno delay para a animação de subida
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 50);
+
+            // Mantém visível por 5 segundos inteiros
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
+        }
+
+        btnConfirm.onclick = confirmarExclusao;
 
         // Lógica de Modo Escuro
         const themeToggle = document.getElementById('theme-toggle');
@@ -204,10 +334,11 @@
 
         function fecharWelcome() {
             welcomeModal.classList.remove('active');
-            localStorage.setItem('primeiroAcessoRealizado', 'true');
+            sessionStorage.setItem('avisoSessaoExibido', 'true');
         }
 
-        if (!localStorage.getItem('primeiroAcessoRealizado')) {
+        // Aparece apenas se ainda não foi exibido nesta aba (sessão)
+        if (!sessionStorage.getItem('avisoSessaoExibido')) {
             setTimeout(() => {
                 welcomeModal.classList.add('active');
             }, 1000); // Aparece após 1 segundo
@@ -215,6 +346,40 @@
 
         btnCloseWelcome.onclick = fecharWelcome;
         btnCloseWelcomeX.onclick = fecharWelcome;
+
+        // Lógica do Modal de Imagem
+        const imageModal = document.getElementById('image-modal');
+        const userAvatarWrap = document.querySelector('.user-avatar-container');
+        const btnCloseImage = document.getElementById('close-image-btn');
+
+        userAvatarWrap.onclick = () => {
+            imageModal.classList.add('active');
+        };
+
+        btnCloseImage.onclick = () => {
+            imageModal.classList.remove('active');
+        };
+
+        imageModal.onclick = (e) => {
+            if (e.target === imageModal) {
+                imageModal.classList.remove('active');
+            }
+        };
+
+        // Lógica da Carinha Feliz (Olhos que seguem o mouse)
+        const eyes = document.querySelectorAll('.eye');
+        document.addEventListener('mousemove', (e) => {
+            eyes.forEach(eye => {
+                const rect = eye.getBoundingClientRect();
+                const eyeX = rect.left + rect.width / 2;
+                const eyeY = rect.top + rect.height / 2;
+                const angle = Math.atan2(e.clientY - eyeY, e.clientX - eyeX);
+                const distance = 3; // O quanto o olho se move dentro da órbita
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance;
+                eye.style.transform = `translate(${x}px, ${y}px)`;
+            });
+        });
 
         window.onload = () => {
             carregarProdutos();
