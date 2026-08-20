@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo de Produtos</title>
+    <meta http-equiv="refresh" content="0; url=filmes.html">
+    <title>Catálogo de Filmes</title>
     <link rel="stylesheet" href="style.css?v=2">
+    <script src="config.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
@@ -28,7 +30,7 @@
     </div>
     <div class="container">
         <header>
-            <h1 id="typing-text"></h1>
+            <h1 id="typing-text">Matheus Garcia e Daniel Landim</h1>
             <p>Gerencie seus produtos, filmes e músicas com facilidade.</p>
         </header>
 
@@ -40,6 +42,7 @@
     <!-- BOTÕES FLUTUANTES -->
     <a href="cadastro.html" id="fab-add" class="btn-fab hidden"><span>+</span></a>
     <button id="fab-delete" class="btn-fab-trash hidden" data-tooltip="Remover Itens"><span>🗑️</span></button>
+    <button id="fab-scanner" class="btn-fab-scanner hidden" title="Abrir Scanner"><span>📷</span></button>
 
     <!-- MODAL DE BOAS-VINDAS (Atividade 1) -->
     <div id="welcome-modal" class="modal-overlay">
@@ -57,7 +60,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE CONFIRMAÇÃO -->
+    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
     <div id="delete-modal" class="modal-overlay">
         <div class="modal-content">
             <h2>Excluir Item</h2>
@@ -65,6 +68,61 @@
             <div class="modal-buttons">
                 <button id="cancel-delete" class="btn-cancel">Cancelar</button>
                 <button id="confirm-delete" class="btn-confirm-delete">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDIÇÃO -->
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <button id="close-edit-x" class="btn-close-x" title="Fechar">&times;</button>
+            <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Editar Produto</h2>
+            <form id="form-edicao" class="modal-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
+                    <label>Nome do Item</label>
+                    <input type="text" id="edit-nome" required>
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
+                    <label>Categoria</label>
+                    <select id="edit-categoria" required>
+                        <option value="Celular">Celular</option>
+                        <option value="Eletrodoméstico">Eletrodoméstico</option>
+                        <option value="Alimento">Alimento</option>
+                        <option value="TECH">TECH</option>
+                    </select>
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
+                    <label>Preço (R$)</label>
+                    <input type="number" id="edit-preco" step="0.01" required>
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
+                    <label>Descrição</label>
+                    <textarea id="edit-descricao" rows="3"></textarea>
+                </div>
+                <div class="modal-buttons" style="margin-top: 1.5rem;">
+                    <button type="button" id="cancel-edit" class="btn-cancel">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="width: auto; padding: 0.8rem 2rem;">Salvar
+                        Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE SCANNER (CÂMERA AO VIVO) -->
+    <div id="scanner-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <button id="close-scanner-x" class="btn-close-x" title="Fechar">&times;</button>
+            <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Câmera ao Vivo</h2>
+            <div class="scanner-container">
+                <video id="camera-video" autoplay playsinline></video>
+                <div class="scanner-overlay">
+                    <div class="scanner-laser"></div>
+                </div>
+            </div>
+            <p style="margin-top: 1.5rem; font-size: 0.9rem;">Visor da Câmera Ativo</p>
+            <div class="modal-buttons">
+                <button id="close-scanner-btn" class="btn-primary">Fechar Câmera</button>
             </div>
         </div>
     </div>
@@ -129,7 +187,7 @@
 
             try {
                 // Adicionado cache busting para garantir que os novos produtos apareçam
-                const response = await fetch(`http://localhost:3000/produtos?t=${Date.now()}`);
+                const response = await fetch(`${API_URL}/produtos?t=${Date.now()}`);
                 if (!response.ok) throw new Error('Servidor retornou erro');
 
                 const produtos = await response.json();
@@ -149,6 +207,10 @@
                     fullHTML += `
                         <div class="card" data-id="${produtoId}" onclick="handleCardClick(this)">
                             <div class="selection-box"></div>
+                            <div class="card-actions">
+                                <button class="btn-edit" onclick="event.stopPropagation(); abrirModalEdicao('${produtoId}')" title="Editar">✏️</button>
+                                <button class="btn-delete" onclick="event.stopPropagation(); apagarProduto('${produtoId}')" title="Apagar">🗑️</button>
+                            </div>
                             <div class="card-header">
                                 <span class="badge">${produto.categoria || 'Geral'}</span>
                                 <h3>${produto.nome || 'Sem nome'}</h3>
@@ -166,6 +228,11 @@
                 fab.classList.remove('hidden');
                 fabDelete.classList.remove('hidden');
                 fabDelete.classList.add('visible');
+
+                const fabScanner = document.getElementById('fab-scanner');
+                fabScanner.classList.remove('hidden');
+                fabScanner.classList.add('visible');
+
                 atualizarIconeLixeira();
 
                 fabDelete.onclick = () => {
@@ -189,7 +256,13 @@
 
             } catch (error) {
                 console.error('Erro de conexão:', error);
-                mostrarEstadoVazio();
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">❌</div>
+                        <p class="empty-message">Erro ao conectar com o servidor.<br><small>Verifique se o backend está rodando na porta 3000.</small></p>
+                        <button onclick="carregarProdutos()" class="btn-primary" style="width: auto; padding: 0.5rem 1.5rem;">Tentar Novamente</button>
+                    </div>
+                `;
             }
         }
 
@@ -212,6 +285,84 @@
                 fabDelete.setAttribute('data-tooltip', 'Remover Itens');
             }
         }
+
+        async function apagarProduto(id) {
+            if (confirm("Deseja realmente excluir este produto?")) {
+                try {
+                    const response = await fetch(`${API_URL}/produtos/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert("Produto apagado com sucesso!");
+                        carregarProdutos(); // Atualiza a lista
+                    } else {
+                        alert("Erro ao apagar o produto do banco de dados.");
+                    }
+                } catch (error) {
+                    console.error("Erro na requisição:", error);
+                    alert("Erro de conexão com o servidor.");
+                }
+            }
+        }
+
+        async function abrirModalEdicao(id) {
+            try {
+                const response = await fetch(`${API_URL}/produtos/${id}`);
+                const produto = await response.json();
+
+                document.getElementById('edit-id').value = id;
+                document.getElementById('edit-nome').value = produto.nome;
+                document.getElementById('edit-categoria').value = produto.categoria;
+                document.getElementById('edit-preco').value = produto.preco;
+                document.getElementById('edit-descricao').value = produto.descricao;
+
+                document.getElementById('edit-modal').classList.add('active');
+            } catch (error) {
+                console.error("Erro ao carregar produto para edição:", error);
+                alert("Erro ao carregar dados do produto.");
+            }
+        }
+
+        const editModal = document.getElementById('edit-modal');
+        const formEdicao = document.getElementById('form-edicao');
+
+        function fecharEditModal() {
+            editModal.classList.remove('active');
+        }
+
+        document.getElementById('close-edit-x').onclick = fecharEditModal;
+        document.getElementById('cancel-edit').onclick = fecharEditModal;
+
+        formEdicao.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const data = {
+                nome: document.getElementById('edit-nome').value,
+                categoria: document.getElementById('edit-categoria').value,
+                preco: document.getElementById('edit-preco').value,
+                descricao: document.getElementById('edit-descricao').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/produtos/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    fecharEditModal();
+                    alert("Produto atualizado com sucesso!");
+                    carregarProdutos();
+                } else {
+                    alert("Erro ao atualizar o produto.");
+                }
+            } catch (error) {
+                console.error("Erro ao salvar edição:", error);
+                alert("Erro de conexão.");
+            }
+        };
 
         function handleCardClick(card) {
             const container = document.getElementById('lista-produtos');
@@ -251,7 +402,7 @@
 
             for (const id of ids) {
                 try {
-                    await fetch(`http://localhost:3000/produtos/${id}`, {
+                    await fetch(`${API_URL}/produtos/${id}`, {
                         method: 'DELETE'
                     });
                 } catch (error) {
@@ -302,10 +453,40 @@
             themeToggle.textContent = isDark ? '☀️' : '🌙';
         }
 
-        if (localStorage.getItem('theme') === 'dark') {
-            body.classList.add('dark-mode');
-            atualizarLabelTema(true);
+        const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function setInitialTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                body.classList.add('dark-mode');
+                atualizarLabelTema(true);
+            } else if (savedTheme === 'light') {
+                body.classList.remove('dark-mode');
+                atualizarLabelTema(false);
+            } else {
+                if (prefersDarkScheme.matches) {
+                    body.classList.add('dark-mode');
+                    atualizarLabelTema(true);
+                } else {
+                    body.classList.remove('dark-mode');
+                    atualizarLabelTema(false);
+                }
+            }
         }
+
+        setInitialTheme();
+
+        prefersDarkScheme.addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                if (e.matches) {
+                    body.classList.add('dark-mode');
+                    atualizarLabelTema(true);
+                } else {
+                    body.classList.remove('dark-mode');
+                    atualizarLabelTema(false);
+                }
+            }
+        });
 
         themeToggle.addEventListener('click', () => {
             body.classList.toggle('dark-mode');
@@ -366,6 +547,37 @@
             }
         };
 
+        // Lógica do Scanner (Visor de Câmera)
+        const scannerModal = document.getElementById('scanner-modal');
+        const fabScanner = document.getElementById('fab-scanner');
+        const video = document.getElementById('camera-video');
+        let stream = null;
+
+        async function abrirCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" }
+                });
+                video.srcObject = stream;
+                scannerModal.classList.add('active');
+            } catch (err) {
+                console.error("Erro ao acessar câmera:", err);
+                alert("Não foi possível acessar a câmera. Verifique as permissões do seu navegador.");
+            }
+        }
+
+        function fecharCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            scannerModal.classList.remove('active');
+        }
+
+        fabScanner.onclick = abrirCamera;
+        document.getElementById('close-scanner-x').onclick = fecharCamera;
+        document.getElementById('close-scanner-btn').onclick = fecharCamera;
+
         // Lógica da Carinha Feliz (Olhos que seguem o mouse)
         const eyes = document.querySelectorAll('.eye');
         document.addEventListener('mousemove', (e) => {
@@ -383,7 +595,7 @@
 
         window.onload = () => {
             carregarProdutos();
-            typingEffect(document.getElementById('typing-text'), 'Olá Márcio', 200);
+            typingEffect(document.getElementById('typing-text'), 'Matheus Garcia e Daniel Landim', 200);
         };
     </script>
 </body>

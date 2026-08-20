@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Produto</title>
     <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
@@ -45,9 +46,10 @@
                 <div class="form-group">
                     <label for="categoria">Categoria</label>
                     <select id="categoria" name="categoria" required>
-                        <option value="Produto">Produto</option>
-                        <option value="Filme">Filme</option>
-                        <option value="Música">Música</option>
+                        <option value="Celular">Celular</option>
+                        <option value="Eletrodoméstico">Eletrodoméstico</option>
+                        <option value="Alimento">Alimento</option>
+                        <option value="TECH">TECH</option>
                     </select>
                 </div>
 
@@ -114,7 +116,7 @@
 
             try {
                 // Envio síncrono para garantir que o produto seja cadastrado antes de prosseguir
-                const response = await fetch('http://localhost:3000/produtos', {
+                const response = await fetch(`${API_URL}/produtos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -125,13 +127,12 @@
                     modal.classList.add('active');
                     form.reset();
                 } else {
-                    alert('Erro ao salvar no servidor.');
+                    const errorContent = await response.json();
+                    alert(`Erro ao salvar: ${errorContent.message || 'Erro desconhecido'}`);
                 }
             } catch (error) {
                 console.error('Erro de conexão:', error);
-                const modal = document.getElementById('success-modal');
-                modal.classList.add('active');
-                form.reset();
+                alert('⚠️ Não foi possível conectar ao servidor. Verifique se o backend está rodando!');
             }
         });
 
@@ -139,14 +140,14 @@
         const successModal = document.getElementById('success-modal');
         const btnConferirFinal = document.getElementById('btn-conferir-final');
 
-        document.getElementById('close-success-x').onclick = () => {
-            window.location.href = 'index.html';
-        };
+        // Funções de redirecionamento garantidas
+        function voltarParaLista() {
+            console.log("Redirecionando para a lista...");
+            window.location.replace('index.html');
+        }
 
-        btnConferirFinal.onclick = () => {
-            successModal.classList.remove('active');
-            window.location.href = 'index.html';
-        };
+        document.getElementById('close-success-x').onclick = voltarParaLista;
+        btnConferirFinal.onclick = voltarParaLista;
         // Lógica de Modo Escuro
         const themeToggle = document.getElementById('theme-toggle');
         const themeText = document.getElementById('theme-text');
@@ -157,10 +158,40 @@
             themeToggle.textContent = isDark ? '☀️' : '🌙';
         }
 
-        if (localStorage.getItem('theme') === 'dark') {
-            body.classList.add('dark-mode');
-            atualizarLabelTema(true);
+        const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function setInitialTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                body.classList.add('dark-mode');
+                atualizarLabelTema(true);
+            } else if (savedTheme === 'light') {
+                body.classList.remove('dark-mode');
+                atualizarLabelTema(false);
+            } else {
+                if (prefersDarkScheme.matches) {
+                    body.classList.add('dark-mode');
+                    atualizarLabelTema(true);
+                } else {
+                    body.classList.remove('dark-mode');
+                    atualizarLabelTema(false);
+                }
+            }
         }
+
+        setInitialTheme();
+
+        prefersDarkScheme.addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                if (e.matches) {
+                    body.classList.add('dark-mode');
+                    atualizarLabelTema(true);
+                } else {
+                    body.classList.remove('dark-mode');
+                    atualizarLabelTema(false);
+                }
+            }
+        });
 
         themeToggle.addEventListener('click', () => {
             body.classList.toggle('dark-mode');

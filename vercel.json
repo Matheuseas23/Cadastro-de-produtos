@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/frontend/filmes.html"
+    },
+    {
+      "src": "/filmes.html",
+      "dest": "/frontend/filmes.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
+    }
+  ]
+}

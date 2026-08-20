@@ -1,0 +1,34 @@
+@baseUrl = http://localhost:3000
+
+### Listar todos os filmes
+GET {{baseUrl}}/filmes
+
+### Buscar um filme
+GET {{baseUrl}}/filmes/1
+
+### Adicionar um filme
+POST {{baseUrl}}/filmes
+Content-Type: application/json
+
+{
+  "title": "Avatar 4",
+  "genre": "Ficcao cientifica",
+  "duration": 140,
+  "age_rating": "12 anos",
+  "release_year": 2026
+}
+
+### Editar um filme
+PUT {{baseUrl}}/filmes/1
+Content-Type: application/json
+
+{
+  "title": "Super Mario Galaxy: O Filme - Edicao Especial",
+  "genre": "Animacao",
+  "duration": 98,
+  "age_rating": "Livre",
+  "release_year": 2026
+}
+
+### Apagar um filme
+DELETE {{baseUrl}}/filmes/13

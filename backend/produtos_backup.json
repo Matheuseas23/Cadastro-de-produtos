@@ -1,1 +1,44 @@
-[]
+[
+  {
+    "id": 1772490934237,
+    "nome": "Samsung Galaxy S26 ULTRA",
+    "categoria": "Celular",
+    "preco": "10500.00",
+    "descricao": "Nova geração de celulares da Samsung 2026.\nGalaxy AI integrado\nTela de privacidade (escurecida) personalizada"
+  },
+  {
+    "id": 1772492005740,
+    "nome": "Xiaomi Redmi note 15 5G",
+    "categoria": "Celular",
+    "preco": "1399.00",
+    "descricao": "Nova geração de smartphones da Xiaomi 2026\nCom Atualização Hyper OS 2.0\nCâmera de 100MP com IA"
+  },
+  {
+    "id": 1772850795777,
+    "nome": "Samsung Galaxy S26 Plus",
+    "categoria": "Celular",
+    "preco": "8000",
+    "descricao": "Um Celular com menos custo para quem quer ter um pouco do S26 ultra integrado"
+  },
+  {
+    "id": 1772851151777,
+    "nome": "Xiaomi 17 ULTRA",
+    "categoria": "Celular",
+    "preco": "6200",
+    "descricao": "Nova Geração de Celulares da Xiaomi 2026\nCameras de 200MP.\nO smartphone definitivo para quem não aceita menos que o top de linha\n"
+  },
+  {
+    "id": 1772851523272,
+    "nome": "Galaxy Buds 3 pro ",
+    "categoria": "TECH",
+    "preco": "150",
+    "descricao": "Durabilidade e Resistência\nCancelamento e Ruído\nGalaxy AI para melhor som\nResistencia a água\nAbaixa o volume ao começar a falar com alguém"
+  },
+  {
+    "id": 1772851657702,
+    "nome": "Power Bank de viajem",
+    "categoria": "TECH",
+    "preco": "78",
+    "descricao": "10000 Mah de Bateria\nCabos de Iphone , Micro USB e USB tipo C\nEntradas USB e Tipo C "
+  }
+]

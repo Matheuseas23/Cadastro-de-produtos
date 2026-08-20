@@ -1,7 +1,8 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 app.use(cors());
@@ -12,7 +13,7 @@ const db = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'web_03mc',
+    database: process.env.DB_NAME || 'alunos_filmes03MB',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -33,8 +34,19 @@ db.getConnection((err, connection) => {
 // Rotas da API
 
 const fs = require('fs');
-const path = require('path');
 const PRODUCTS_FILE = path.join(__dirname, 'produtos_backup.json');
+const FILMS_TABLE = 'filmes_MatheusGarciaDanielLandim';
+
+function validarFilme(body) {
+    const { title, genre, duration, age_rating } = body;
+    const duracao = Number(duration);
+
+    if (!title || !genre || !age_rating || !Number.isInteger(duracao) || duracao <= 0) {
+        return 'Informe title, genre, duration (inteiro positivo) e age_rating.';
+    }
+
+    return null;
+}
 
 // Função para salvar em JSON (fallback se DB falhar)
 function saveToJSON(product) {
@@ -42,13 +54,21 @@ function saveToJSON(product) {
     try {
         let products = [];
         if (fs.existsSync(PRODUCTS_FILE)) {
-            products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+            const fileContent = fs.readFileSync(PRODUCTS_FILE, 'utf8');
+            try {
+                products = JSON.parse(fileContent);
+                if (!Array.isArray(products)) products = [];
+            } catch (parseError) {
+                console.error('Erro ao processar JSON existente, resetando backup:', parseError.message);
+                products = [];
+            }
         }
         const newProduct = { id, ...product };
         products.push(newProduct);
         fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+        console.log('✅ Item salvo no backup JSON:', newProduct.nome);
     } catch (e) {
-        console.error('Erro ao salvar no backup JSON:', e);
+        console.error('❌ Erro crítico ao salvar no backup JSON:', e);
     }
     return id;
 }
@@ -57,23 +77,133 @@ function saveToJSON(product) {
 function readFromJSON() {
     try {
         if (fs.existsSync(PRODUCTS_FILE)) {
-            return JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+            const fileContent = fs.readFileSync(PRODUCTS_FILE, 'utf8');
+            const data = JSON.parse(fileContent);
+            return Array.isArray(data) ? data : [];
         }
     } catch (e) {
-        console.error('Erro ao ler backup JSON:', e);
+        console.error('❌ Erro ao ler backup JSON:', e);
     }
     return [];
 }
 
+// CRUD de filmes
+app.get('/filmes', (req, res) => {
+    const query = `SELECT * FROM ${FILMS_TABLE} ORDER BY id`;
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Erro ao listar filmes:', err.message);
+            return res.status(500).json({ message: 'Não foi possível listar os filmes.' });
+        }
+        res.json(results);
+    });
+});
+
+app.get('/filmes/:id', (req, res) => {
+    const query = `SELECT * FROM ${FILMS_TABLE} WHERE id = ?`;
+    db.query(query, [req.params.id], (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar filme:', err.message);
+            return res.status(500).json({ message: 'Não foi possível buscar o filme.' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Filme não encontrado.' });
+        }
+        res.json(results[0]);
+    });
+});
+
+app.post('/filmes', (req, res) => {
+    const erro = validarFilme(req.body);
+    if (erro) return res.status(400).json({ message: erro });
+
+    const { title, genre, duration, age_rating } = req.body;
+    const anoLancamento = Number(req.body.release_year || 2026);
+    if (anoLancamento !== 2026) {
+        return res.status(400).json({ message: 'O filme deve ter ano_lancamento igual a 2026.' });
+    }
+
+    const query = `INSERT INTO ${FILMS_TABLE} (title, genre, duration, age_rating, release_year) VALUES (?, ?, ?, ?, ?)`;
+    db.query(query, [title, genre, Number(duration), age_rating, anoLancamento], (err, result) => {
+        if (err) {
+            console.error('Erro ao cadastrar filme:', err.message);
+            return res.status(500).json({ message: 'Não foi possível cadastrar o filme.' });
+        }
+        res.status(201).json({ message: 'Filme cadastrado com sucesso.', id: result.insertId });
+    });
+});
+
+app.put('/filmes/:id', (req, res) => {
+    const erro = validarFilme(req.body);
+    if (erro) return res.status(400).json({ message: erro });
+
+    const anoLancamento = Number(req.body.release_year || 2026);
+    if (anoLancamento !== 2026) {
+        return res.status(400).json({ message: 'O filme deve ter ano_lancamento igual a 2026.' });
+    }
+
+    const { title, genre, duration, age_rating } = req.body;
+    const query = `UPDATE ${FILMS_TABLE} SET title = ?, genre = ?, duration = ?, age_rating = ?, release_year = ? WHERE id = ?`;
+    db.query(query, [title, genre, Number(duration), age_rating, anoLancamento, req.params.id], (err, result) => {
+        if (err) {
+            console.error('Erro ao editar filme:', err.message);
+            return res.status(500).json({ message: 'Não foi possível editar o filme.' });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Filme não encontrado.' });
+        }
+        res.json({ message: 'Filme editado com sucesso.', id: req.params.id });
+    });
+});
+
+app.delete('/filmes/:id', (req, res) => {
+    const query = `DELETE FROM ${FILMS_TABLE} WHERE id = ?`;
+    db.query(query, [req.params.id], (err, result) => {
+        if (err) {
+            console.error('Erro ao apagar filme:', err.message);
+            return res.status(500).json({ message: 'Não foi possível apagar o filme.' });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Filme não encontrado.' });
+        }
+        res.json({ message: 'Filme apagado com sucesso.', id: req.params.id });
+    });
+});
+
 // 1. Mostrar produtos (Listar)
 app.get('/produtos', (req, res) => {
+    console.log('🔍 Solicitando lista de produtos...');
     const query = 'SELECT * FROM produtos_natal';
     db.query(query, (err, results) => {
         if (err) {
-            console.error('Falha no MySQL, usando backup JSON:', err.message);
-            return res.json(readFromJSON());
+            console.error('⚠️ Falha no MySQL ao listar, usando backup JSON:', err.message);
+            const backupData = readFromJSON();
+            return res.json(backupData);
         }
+        console.log(`✅ ${results.length} produtos encontrados no MySQL.`);
         res.json(results);
+    });
+});
+
+// 1.1 Obter um único produto
+app.get('/produtos/:id', (req, res) => {
+    const { id } = req.params;
+    console.log(`🔍 Buscando dados do produto ID: ${id}`);
+    const query = 'SELECT * FROM produtos_natal WHERE id = ?';
+    db.query(query, [id], (err, results) => {
+        if (err || !results || results.length === 0) {
+            console.log('⚠️ MySQL falhou ou não encontrou, tentando backup JSON...');
+            const products = readFromJSON();
+            const product = products.find(p => p.id.toString() === id.toString());
+            if (product) {
+                console.log('✅ Produto encontrado no backup JSON');
+                return res.json(product);
+            }
+            console.log('❌ Produto não encontrado em nenhum lugar');
+            return res.status(404).json({ message: 'Produto não encontrado' });
+        }
+        console.log('✅ Produto encontrado no MySQL');
+        res.json(results[0]);
     });
 });
 
@@ -88,10 +218,14 @@ app.post('/produtos', (req, res) => {
     const query = 'INSERT INTO produtos_natal (nome, categoria, preco, descricao) VALUES (?, ?, ?, ?)';
     db.query(query, [nome, categoria, preco, descricao], (err, result) => {
         if (err) {
-            console.error('Falha no MySQL ao cadastrar, usando ID do backup:', err.message);
-            return res.status(201).json({ message: 'Item salvo (Modo Offline/Backup)!', id: backupId });
+            console.error('⚠️ Falha no MySQL ao cadastrar, usando ID do backup:', err.message);
+            return res.status(201).json({
+                message: 'Item salvo (Modo Backup)!',
+                id: backupId,
+                warning: 'MySQL Offline'
+            });
         }
-        // Se o DB funcionar, retornamos o ID do DB
+        console.log('✅ Produto cadastrado no MySQL com ID:', result.insertId);
         res.status(201).json({ message: 'Produto cadastrado com sucesso!', id: result.insertId });
     });
 });
@@ -146,7 +280,42 @@ app.delete('/produtos/:id', (req, res) => {
     });
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
+// 4. Editar produto
+app.put('/produtos/:id', (req, res) => {
+    const { id } = req.params;
+    const { nome, categoria, preco, descricao } = req.body;
+
+    // Atualiza no JSON
+    try {
+        if (fs.existsSync(PRODUCTS_FILE)) {
+            let products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+            const index = products.findIndex(p => p.id.toString() === id.toString());
+            if (index !== -1) {
+                products[index] = { ...products[index], nome, categoria, preco, descricao };
+                fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+            }
+        }
+    } catch (e) {
+        console.error('Erro ao atualizar JSON:', e);
+    }
+
+    // Atualiza no MySQL
+    const query = 'UPDATE produtos_natal SET nome = ?, categoria = ?, preco = ?, descricao = ? WHERE id = ?';
+    db.query(query, [nome, categoria, preco, descricao, id], (err, result) => {
+        if (err) {
+            console.error('Erro MySQL ao atualizar:', err.message);
+            return res.json({ message: 'Produto atualizado (Modo Offline/Backup)!', id });
+        }
+        res.json({ message: 'Produto atualizado com sucesso!', id });
+    });
 });
+
+const PORT = process.env.PORT || 3000;
+
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Servidor rodando na porta ${PORT}`);
+    });
+}
+
+module.exports = app;
