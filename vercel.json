@@ -1,17 +1,33 @@
 {
   "version": 2,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/",
-      "dest": "/frontend/filmes.html"
+      "source": "/",
+      "destination": "/frontend/filmes.html"
     },
     {
-      "src": "/filmes.html",
-      "dest": "/frontend/filmes.html"
+      "source": "/index.html",
+      "destination": "/frontend/index.html"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "source": "/filmes.html",
+      "destination": "/frontend/filmes.html"
+    },
+    {
+      "source": "/cadastro.html",
+      "destination": "/frontend/cadastro.html"
+    },
+    {
+      "source": "/style.css",
+      "destination": "/frontend/style.css"
+    },
+    {
+      "source": "/config.js",
+      "destination": "/frontend/config.js"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/frontend/assets/:path*"
     }
   ]
 }
